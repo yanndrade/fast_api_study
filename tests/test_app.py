@@ -17,4 +17,14 @@ def test_read_root_deve_retornar_ok_e_hello_world():
 
     assert response.status_code == HTTPStatus.OK  # Assert (Verificação)
     # Assert (Verificação)
-    assert response.json() == {'Message': 'Hello World!'}
+    assert response.json() == {'message': 'Hello World!'}
+
+
+def test_read_hello_deve_retornar_ok_e_hello_world():
+    client = TestClient(app)  # Arrange (Organização)
+
+    response = client.get('/hello')  # Act (Ação)
+
+    assert response.status_code == HTTPStatus.OK  # Assert (Verificação)
+    # Assert (Verificação)
+    assert '<h1>Hello World!</h1>' in response.text
