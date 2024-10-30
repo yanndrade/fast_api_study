@@ -19,7 +19,7 @@ def test_read_root_deve_retornar_ok_e_hello_world():
     # Assert (Verificação)
     assert response.json() == {'message': 'Hello World!'}
 
-
+#Exercicio Aula2
 def test_read_hello_deve_retornar_ok_e_hello_world():
     client = TestClient(app)  # Arrange (Organização)
 

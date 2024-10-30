@@ -16,7 +16,7 @@ app = FastAPI()
 def read_root():
     return {'message': 'Hello World!'}
 
-
+#Exercicio Aula2
 @app.get('/hello', status_code=HTTPStatus.OK, response_class=HTMLResponse)
 def read_hello():
     return """
