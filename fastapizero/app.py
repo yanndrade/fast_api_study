@@ -63,7 +63,21 @@ def read_users():
     return {'users': db}
 
 
-@app.put('/users/{user_id}', response_model=UserPublic)
+@app.get(
+    '/users/{user_id}', status_code=HTTPStatus.OK, response_model=UserPublic
+)
+def read_user_by_id(user_id: int):
+    if user_id < 1 or user_id > len(db):
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND, detail='User not found'
+        )
+
+    return db[user_id - 1]
+
+
+@app.put(
+    '/users/{user_id}', status_code=HTTPStatus.OK, response_model=UserPublic
+)
 def update_user(
     user_id: int,
     user: UserSchema,
@@ -80,7 +94,9 @@ def update_user(
     return updated_user  # HTTPStatus.OK
 
 
-@app.delete('/users/{user_id}', response_model=Message)
+@app.delete(
+    '/users/{user_id}', status_code=HTTPStatus.OK, response_model=Message
+)
 def delete_user(user_id: int):
     if user_id < 1 or user_id > len(db):
         raise HTTPException(
