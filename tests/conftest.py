@@ -5,9 +5,11 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, event
 from sqlalchemy.orm import Session
+from sqlalchemy.pool import StaticPool
 
 from fastapizero.app import app
-from fastapizero.models import table_registry
+from fastapizero.database import get_session
+from fastapizero.models import User, table_registry
 
 
 @contextmanager
@@ -24,13 +26,24 @@ def _mock_db_time(*, model, time=datetime(2024, 1, 1)):
 
 
 @pytest.fixture
-def client():  # Arrange
-    return TestClient(app)
+def client(session):  # Arrange
+    def get_test_session():
+        return session
+
+    with TestClient(app) as client:
+        app.dependency_overrides[get_session] = get_test_session
+        yield client
+    app.dependency_overrides.clear()
+    # return TestClient(app)
 
 
 @pytest.fixture
 def session():
-    engine = create_engine('sqlite:///:memory:')
+    engine = create_engine(
+        'sqlite:///:memory:',
+        connect_args={'check_same_thread': False},
+        poolclass=StaticPool,
+    )
     table_registry.metadata.create_all(engine)
 
     with Session(engine) as session:
@@ -42,3 +55,15 @@ def session():
 @pytest.fixture
 def mock_db_time():
     return _mock_db_time
+
+
+@pytest.fixture
+def user(session):
+    user = User(
+        username='TestUser', password='test_password', email='test@test.com'
+    )
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+
+    return user
