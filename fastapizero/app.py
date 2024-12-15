@@ -2,6 +2,7 @@ from http import HTTPStatus
 
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.responses import HTMLResponse
+from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -9,9 +10,16 @@ from fastapizero.database import get_session
 from fastapizero.models import User
 from fastapizero.schemas import (
     Message,
+    Token,
     UserList,
     UserPublic,
     UserSchema,
+)
+from fastapizero.security import (
+    create_access_token,
+    get_current_user,
+    get_password_hash,
+    verify_password,
 )
 
 app = FastAPI()
@@ -66,7 +74,9 @@ def create_user(user: UserSchema, session: Session = Depends(get_session)):
                 detail='Email already exists',
             )
     db_user = User(
-        username=user.username, password=user.password, email=user.email
+        username=user.username,
+        password=get_password_hash(user.password),
+        email=user.email,
     )
 
     session.add(db_user)
@@ -78,7 +88,9 @@ def create_user(user: UserSchema, session: Session = Depends(get_session)):
 
 @app.get('/users/', status_code=HTTPStatus.OK, response_model=UserList)
 def read_users(
-    limit: int = 10, offset: int = 0, session: Session = Depends(get_session)
+    limit: int = 10,
+    offset: int = 0,
+    session: Session = Depends(get_session),
 ):
     users = session.scalars(select(User).limit(limit).offset(offset))
 
@@ -102,19 +114,23 @@ def read_user_by_id(user_id: int, session: Session = Depends(get_session)):
     '/users/{user_id}', status_code=HTTPStatus.OK, response_model=UserPublic
 )
 def update_user(
-    user_id: int, user: UserSchema, session: Session = Depends(get_session)
+    user_id: int,
+    user: UserSchema,
+    session: Session = Depends(get_session),
+    current_user=Depends(get_current_user),
 ):
-    user_to_update = session.scalar(select(User).where(User.id == user_id))
-    if not user_to_update:
+    if current_user.id != user_id:
         raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND, detail='User not found'
+            status_code=HTTPStatus.UNAUTHORIZED,
+            detail='Not enough permissions',
         )
-    user_to_update.username = user.username
-    user_to_update.email = user.email
-    user_to_update.password = user.password
+
+    current_user.username = user.username
+    current_user.email = user.email
+    current_user.password = get_password_hash(user.password)
     session.commit()
-    session.refresh(user_to_update)
-    return user_to_update
+    session.refresh(current_user)
+    return current_user
 
 
 @app.delete(
@@ -122,12 +138,36 @@ def update_user(
     status_code=HTTPStatus.OK,
     response_model=Message,
 )
-def delete_user(user_id: int, session: Session = Depends(get_session)):
-    user_to_delete = session.scalar(select(User).where(User.id == user_id))
-    if not user_to_delete:
+def delete_user(
+    user_id: int,
+    session: Session = Depends(get_session),
+    current_user=Depends(get_current_user),
+):
+    if current_user.id != user_id:
         raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND, detail='User not found'
+            status_code=HTTPStatus.UNAUTHORIZED,
+            detail='Not enough permissions',
         )
-    session.delete(user_to_delete)
+
+    session.delete(current_user)
     session.commit()
     return {'message': 'User deleted successfully'}
+
+
+@app.post('/token', response_model=Token)
+def login_for_access_token(
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    session: Session = Depends(get_session),
+):
+    user_db = session.scalar(
+        select(User).where(User.username == form_data.username)
+    )
+    if not user_db or not verify_password(
+        form_data.password, user_db.password
+    ):
+        raise HTTPException(
+            status_code=HTTPStatus.BAD_REQUEST,
+            detail='Incorrect username or password',
+        )
+    access_token = create_access_token(data_payload={'sub': user_db.username})
+    return {'access_token': access_token, 'token_type': 'Bearer'}

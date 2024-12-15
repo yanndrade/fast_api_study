@@ -111,15 +111,16 @@ def test_read_user_by_id_deve_retornar_not_found(client, user):
     assert response.json() == {'detail': 'User not found'}
 
 
-def test_update_user(client, user):
+def test_update_user(client, user, token):
     response = client.put(  # Act (Ação)
-        '/users/1',
+        f'/users/{user.id}',
         json={
             'username': 'TestModif',
             'password': 'passwordModif',
             'email': 'testmodif@testmodif.com',
-            'id': 1,
+            'id': user.id,
         },
+        headers={'Authorization': f'Bearer {token}'},
     )
 
     assert response.status_code == HTTPStatus.OK  # Assert (Verificação)
@@ -130,29 +131,80 @@ def test_update_user(client, user):
     }
 
 
-def test_update_user_deve_retorna_not_found(client, user):
+def test_update_user_deve_retorna_not_authorized(client, user, token):
     response = client.put(  # Act (Ação)
         '/users/999999999999999999',
         json={
             'username': 'TestModif',
             'password': 'passwordModif',
             'email': 'testmodif@testmodif.com',
-            'id': 1,
+            'id': user.id,
         },
+        headers={'Authorization': f'Bearer {token}'},
     )
-    assert response.status_code == HTTPStatus.NOT_FOUND  # Assert (Verificação)
-    assert response.json() == {'detail': 'User not found'}
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
+    assert response.json() == {'detail': 'Not enough permissions'}
 
 
-def test_delete_user(client, user):
-    response = client.delete('/users/1')  # Act (Ação)
+def test_delete_user(client, user, token):
+    response = client.delete(
+        f'/users/{user.id}', headers={'Authorization': f'Bearer {token}'}
+    )  # Act (Ação)
 
     # Assert (Verificação)
     assert response.json() == {'message': 'User deleted successfully'}
 
 
-def test_delete_user_deve_retornar_not_found(client, user):
-    response = client.delete('/users/999999999')  # Act (Ação)
+def test_delete_user_deve_retornar_not_authorized(client, user, token):
+    response = client.delete(
+        '/users/999999999', headers={'Authorization': f'Bearer {token}'}
+    )  # Act (Ação)
 
-    assert response.status_code == HTTPStatus.NOT_FOUND  # Assert (Verificação)
-    assert response.json() == {'detail': 'User not found'}
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
+    assert response.json() == {'detail': 'Not enough permissions'}
+
+
+def test_get_token(client, user):
+    response = client.post(
+        '/token',
+        data={
+            'username': user.username,
+            'password': user.clean_password,
+        },
+    )
+
+    token = response.json()
+
+    assert response.status_code == HTTPStatus.OK
+    assert 'access_token' in token
+    assert token['token_type'] == 'Bearer'
+
+
+def test_get_token_username_error(client, user):
+    response = client.post(
+        '/token',
+        data={
+            'username': 'ErrorUser',
+            'password': user.clean_password,
+        },
+    )
+
+    token = response.json()
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+    assert 'access_token' not in token
+
+
+def test_get_token_password_error(client, user):
+    response = client.post(
+        '/token',
+        data={
+            'username': user.username,
+            'password': 'ErrorPassword',
+        },
+    )
+
+    token = response.json()
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+    assert 'access_token' not in token
