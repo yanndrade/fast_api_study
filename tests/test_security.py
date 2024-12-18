@@ -3,17 +3,18 @@ from http import HTTPStatus
 from jwt import decode
 
 from fastapizero.security import (
-    ALGORITHM,
-    SECRET_KEY,
     create_access_token,
 )
+from fastapizero.settings import Settings
 
 
 def test_jwt():
     data = {'sub': 'testUser'}
     token = create_access_token(data_payload=data)
 
-    result = decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+    result = decode(
+        token, Settings().SECRET_KEY, algorithms=[Settings().ALGORITHM]
+    )
 
     assert result['sub'] == data['sub']
     assert result['exp'] is not None

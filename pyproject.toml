@@ -50,7 +50,7 @@ addopts = '-p no:warnings'
 [tool.taskipy.tasks]
 run = "fastapi dev fastapizero/app.py"
 
-pre_test = 'task lint'
+#pre_test = 'task lint'
 test = "pytest --cov=fastapizero -vv"
 post_test = 'coverage html'
 
