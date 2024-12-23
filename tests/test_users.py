@@ -30,7 +30,7 @@ def test_create_user_username_deve_retornar_bad_request(client, user):
         # Validar UserSchema
         '/users/',
         json={
-            'username': 'TestUser',
+            'username': user.username,
             'password': 'password',
             'email': 'test@test.com',
         },
@@ -47,7 +47,7 @@ def test_create_user_email_deve_retornar_bad_request(client, user):
         json={
             'username': 'UserTest',
             'password': 'password',
-            'email': 'test@test.com',
+            'email': user.email,
         },
     )
     assert response.status_code == HTTPStatus.BAD_REQUEST
@@ -75,7 +75,7 @@ def test_read_users_with_users(client, user):
 
 
 def test_read_user_by_id(client, user):
-    response = client.get('/users/1')  # Act (Ação)
+    response = client.get(f'/users/{user.id}')  # Act (Ação)
     user_schema = UserPublic.model_validate(user).model_dump()
 
     assert response.status_code == HTTPStatus.OK  # Assert (Verificação)
@@ -109,9 +109,11 @@ def test_update_user(client, user, token):
     }
 
 
-def test_update_user_deve_retorna_not_authorized(client, user, token):
+def test_update_user_deve_retorna_not_authorized(
+    client, user, other_user, token
+):
     response = client.put(  # Act (Ação)
-        '/users/999999999999999999',
+        f'/users/{other_user.id}',
         json={
             'username': 'TestModif',
             'password': 'passwordModif',
@@ -133,9 +135,11 @@ def test_delete_user(client, user, token):
     assert response.json() == {'message': 'User deleted successfully'}
 
 
-def test_delete_user_deve_retornar_not_authorized(client, user, token):
+def test_delete_user_deve_retornar_not_authorized(
+    client, user, other_user, token
+):
     response = client.delete(
-        '/users/999999999', headers={'Authorization': f'Bearer {token}'}
+        f'/users/{other_user.id}', headers={'Authorization': f'Bearer {token}'}
     )  # Act (Ação)
 
     assert response.status_code == HTTPStatus.FORBIDDEN

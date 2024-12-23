@@ -21,6 +21,8 @@ ruff = "^0.7.1"
 pytest = "^8.3.3"
 pytest-cov = "^6.0.0"
 taskipy = "^1.14.0"
+factory-boy = "^3.3.1"
+freezegun = "^1.5.1"
 
 [build-system]
 requires = ["poetry-core"]
@@ -50,7 +52,7 @@ addopts = '-p no:warnings'
 [tool.taskipy.tasks]
 run = "fastapi dev fastapizero/app.py"
 
-#pre_test = 'task lint'
+pre_test = 'task lint'
 test = "pytest --cov=fastapizero -vv"
 post_test = 'coverage html'
 
