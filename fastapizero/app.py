@@ -3,7 +3,7 @@ from http import HTTPStatus
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 
-from fastapizero.routers import auth, users
+from fastapizero.routers import auth, todos, users
 from fastapizero.schemas import (
     Message,
 )
@@ -11,6 +11,7 @@ from fastapizero.schemas import (
 app = FastAPI()
 app.include_router(users.router)
 app.include_router(auth.router)
+app.include_router(todos.router)
 
 
 # Create (Criar): adicionar novos registros ao banco de dados.
