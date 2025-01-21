@@ -13,7 +13,6 @@ app.include_router(users.router)
 app.include_router(auth.router)
 app.include_router(todos.router)
 
-
 # Create (Criar): adicionar novos registros ao banco de dados.
 # Read (Ler): recuperar registros existentes do banco de dados.
 # Update (Atualizar): modificar registros existentes no banco de dados.

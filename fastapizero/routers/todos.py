@@ -13,6 +13,7 @@ from fastapizero.schemas import (
     ToDoPublic,
     ToDoSchema,
     ToDoState,
+    ToDoUpdate,
 )
 from fastapizero.security import get_current_user
 
@@ -77,3 +78,27 @@ def delete_todo(
     session.commit()
 
     return {'message': 'Todo deleted successfully'}
+
+
+@router.patch(
+    '/{todo_id}', response_model=ToDoPublic, status_code=HTTPStatus.OK
+)
+def update_todo(
+    todo_id: int, session: T_Session, user: T_CurrentUser, todo: ToDoUpdate
+):
+    db_todo = session.scalar(
+        select(ToDos).where(ToDos.id == todo_id, ToDos.user_id == user.id)
+    )
+
+    if not db_todo:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND, detail='Task not found'
+        )
+    for key, value in todo.model_dump(exclude_unset=True).items():
+        setattr(db_todo, key, value)
+
+    session.add(db_todo)
+    session.commit()
+    session.refresh(db_todo)
+
+    return db_todo

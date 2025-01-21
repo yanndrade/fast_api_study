@@ -154,3 +154,82 @@ def test_delete_todo_should_return_not_found(client, token, user, session):
     )
 
     assert response.status_code == HTTPStatus.NOT_FOUND
+
+
+def test_update_todo_state(client, token, user, session):
+    todo = ToDoFactory.create(user_id=user.id)
+    session.add(todo)
+    session.commit()
+    session.refresh(todo)
+
+    response = client.patch(
+        f'/todos/{todo.id}',
+        json={'state': 'done'},
+        headers={'Authorization': f'Bearer {token}'},
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json() == {
+        'id': todo.id,
+        'title': todo.title,
+        'description': todo.description,
+        'state': 'done',
+    }
+
+
+def test_update_todo_title(client, token, user, session):
+    todo = ToDoFactory.create(user_id=user.id)
+    session.add(todo)
+    session.commit()
+    session.refresh(todo)
+
+    response = client.patch(
+        f'/todos/{todo.id}',
+        json={'title': 'Updated title'},
+        headers={'Authorization': f'Bearer {token}'},
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json() == {
+        'id': todo.id,
+        'title': 'Updated title',
+        'description': todo.description,
+        'state': todo.state,
+    }
+
+
+def test_todo_update_description(client, token, user, session):
+    todo = ToDoFactory.create(user_id=user.id)
+    session.add(todo)
+    session.commit()
+    session.refresh(todo)
+
+    response = client.patch(
+        f'/todos/{todo.id}',
+        json={'description': 'Updated description'},
+        headers={'Authorization': f'Bearer {token}'},
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json() == {
+        'id': todo.id,
+        'title': todo.title,
+        'description': 'Updated description',
+        'state': todo.state,
+    }
+
+
+def test_update_todo_should_return_not_found(client, token, user, session):
+    todo = ToDoFactory.create(user_id=user.id)
+    session.add(todo)
+    session.commit()
+    session.refresh(todo)
+
+    response = client.patch(
+        f'/todos/{todo.id + 1}',
+        json={'description': 'Updated description'},
+        headers={'Authorization': f'Bearer {token}'},
+    )
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert response.json() == {'detail': 'Task not found'}
