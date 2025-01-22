@@ -83,7 +83,7 @@ def test_read_user_by_id(client, user):
 
 
 def test_read_user_by_id_deve_retornar_not_found(client, user):
-    response = client.get('/users/99999999999')  # Act (Ação)
+    response = client.get(f'/users/{user.id + 1}')  # Act (Ação)
 
     assert response.status_code == HTTPStatus.NOT_FOUND  # Assert (Verificação)
     assert response.json() == {'detail': 'User not found'}

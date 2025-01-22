@@ -26,8 +26,8 @@ def test_create_todo(client, token, session, user):
         'title': 'Test Todo',
         'description': 'This is a test todo',
         'state': 'todo',
-        'created_at': created_todo.created_at.strftime('%Y-%m-%dT%H:%M:%S'),
-        'updated_at': created_todo.updated_at.strftime('%Y-%m-%dT%H:%M:%S'),
+        'created_at': created_todo.created_at.strftime('%Y-%m-%dT%H:%M:%S.%f'),
+        'updated_at': created_todo.updated_at.strftime('%Y-%m-%dT%H:%M:%S.%f'),
     }
 
 
@@ -181,8 +181,8 @@ def test_update_todo_state(client, token, user, session):
         'title': todo.title,
         'description': todo.description,
         'state': 'done',
-        'created_at': todo.created_at.strftime('%Y-%m-%dT%H:%M:%S'),
-        'updated_at': todo.updated_at.strftime('%Y-%m-%dT%H:%M:%S'),
+        'created_at': todo.created_at.strftime('%Y-%m-%dT%H:%M:%S.%f'),
+        'updated_at': todo.updated_at.strftime('%Y-%m-%dT%H:%M:%S.%f'),
     }
 
 
@@ -204,8 +204,8 @@ def test_update_todo_title(client, token, user, session):
         'title': 'Updated title',
         'description': todo.description,
         'state': todo.state,
-        'created_at': todo.created_at.strftime('%Y-%m-%dT%H:%M:%S'),
-        'updated_at': todo.updated_at.strftime('%Y-%m-%dT%H:%M:%S'),
+        'created_at': todo.created_at.strftime('%Y-%m-%dT%H:%M:%S.%f'),
+        'updated_at': todo.updated_at.strftime('%Y-%m-%dT%H:%M:%S.%f'),
     }
 
 
@@ -227,8 +227,8 @@ def test_todo_update_description(client, token, user, session):
         'title': todo.title,
         'description': 'Updated description',
         'state': todo.state,
-        'created_at': todo.created_at.strftime('%Y-%m-%dT%H:%M:%S'),
-        'updated_at': todo.updated_at.strftime('%Y-%m-%dT%H:%M:%S'),
+        'created_at': todo.created_at.strftime('%Y-%m-%dT%H:%M:%S.%f'),
+        'updated_at': todo.updated_at.strftime('%Y-%m-%dT%H:%M:%S.%f'),
     }
 
 
