@@ -40,3 +40,11 @@ class ToDos:
     state: Mapped[ToDoState]
 
     user_id: Mapped[int] = mapped_column(ForeignKey('users.id'))
+
+    # Exercício 1 - Adicione os campos created_at e updated_at
+    created_at: Mapped[datetime] = mapped_column(
+        init=False, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        init=False, server_default=func.now(), onupdate=func.now()
+    )

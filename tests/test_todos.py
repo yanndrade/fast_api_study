@@ -1,10 +1,13 @@
 from http import HTTPStatus
 
+from sqlalchemy import select
+
+from fastapizero.models import ToDos
 from fastapizero.schemas import ToDoState
 from tests.conftest import ToDoFactory
 
 
-def test_create_todo(client, token):
+def test_create_todo(client, token, session, user):
     response = client.post(
         '/todos/',
         json={
@@ -15,12 +18,16 @@ def test_create_todo(client, token):
         headers={'Authorization': f'Bearer {token}'},
     )
 
+    created_todo = session.scalar(select(ToDos).where(ToDos.id == 1))
+
     assert response.status_code == HTTPStatus.CREATED
     assert response.json() == {
         'id': 1,
         'title': 'Test Todo',
         'description': 'This is a test todo',
         'state': 'todo',
+        'created_at': created_todo.created_at.strftime('%Y-%m-%dT%H:%M:%S'),
+        'updated_at': created_todo.updated_at.strftime('%Y-%m-%dT%H:%M:%S'),
     }
 
 
@@ -174,6 +181,8 @@ def test_update_todo_state(client, token, user, session):
         'title': todo.title,
         'description': todo.description,
         'state': 'done',
+        'created_at': todo.created_at.strftime('%Y-%m-%dT%H:%M:%S'),
+        'updated_at': todo.updated_at.strftime('%Y-%m-%dT%H:%M:%S'),
     }
 
 
@@ -195,6 +204,8 @@ def test_update_todo_title(client, token, user, session):
         'title': 'Updated title',
         'description': todo.description,
         'state': todo.state,
+        'created_at': todo.created_at.strftime('%Y-%m-%dT%H:%M:%S'),
+        'updated_at': todo.updated_at.strftime('%Y-%m-%dT%H:%M:%S'),
     }
 
 
@@ -216,6 +227,8 @@ def test_todo_update_description(client, token, user, session):
         'title': todo.title,
         'description': 'Updated description',
         'state': todo.state,
+        'created_at': todo.created_at.strftime('%Y-%m-%dT%H:%M:%S'),
+        'updated_at': todo.updated_at.strftime('%Y-%m-%dT%H:%M:%S'),
     }
 
 
@@ -233,3 +246,29 @@ def test_update_todo_should_return_not_found(client, token, user, session):
 
     assert response.status_code == HTTPStatus.NOT_FOUND
     assert response.json() == {'detail': 'Task not found'}
+
+
+def test_list_todos_should_return_all_expected_fields__exercicio(
+    session, client, user, token, mock_db_time
+):
+    with mock_db_time(model=ToDos) as time:
+        todo = ToDoFactory.create(user_id=user.id)
+        session.add(todo)
+        session.commit()
+
+    session.refresh(todo)
+    response = client.get(
+        '/todos/',
+        headers={'Authorization': f'Bearer {token}'},
+    )
+
+    assert response.json()['todos'] == [
+        {
+            'created_at': time.isoformat(),
+            'updated_at': time.isoformat(),
+            'description': todo.description,
+            'id': todo.id,
+            'state': todo.state,
+            'title': todo.title,
+        }
+    ]
